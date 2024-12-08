@@ -1,21 +1,42 @@
 from django.shortcuts import get_object_or_404
+from django.utils.timezone import now, timedelta
 from rest_framework import viewsets
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import RetrieveUpdateDestroyAPIView, CreateAPIView, ListCreateAPIView
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
-
-from users.permissions import IsModerator, IsOwner
-from .models import Course, Lesson, Subscription
-from .serializers import CourseSerializer, LessonSerializer
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet
+
+from .models import Course, Subscription
+from .models import Lesson
 from .paginators import CustomPagination
+from .serializers import CourseSerializer, LessonSerializer
+from .tasks import send_course_update_email
+
+
+class CourseUpdateView(APIView):
+    def post(self, request, course_id):
+        course = Course.objects.get(id=course_id)
+        course.updated_at = now()
+        course.save()
+
+        subscribers = Subscription.objects.filter(course=course)
+        for subscriber in subscribers:
+            # Проверка обновления курса
+            if course.updated_at - subscriber.last_notified_at > timedelta(hours=4):
+                send_course_update_email.delay(user_email=subscriber.user.email, course_title=course.title,
+                    message="Курс был обновлен. Проверьте новые материалы!", )
+                subscriber.last_notified_at = now()
+                subscriber.save()
+
+        return Response({"status": "Обновления отправлены"})
+
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
     pagination_class = CustomPagination  # Пагинация
+
 
 class CourseCreateAPIView(CreateAPIView):
     """

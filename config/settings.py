@@ -25,7 +25,8 @@ INSTALLED_APPS = [
     "users",
     "lms",
     'rest_framework_simplejwt',
-    'drf_yasg'
+    'drf_yasg',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -136,3 +137,10 @@ STRIPE_API_KEY = config("STRIPE_API_KEY")
 
 STRIPE_SECRET_KEY = config("STRIPE_API_KEY")
 STRIPE_PUBLIC_KEY = config("STRIPE_PUBLIC_KEY")
+
+
+CELERY_BROKER_URL = config("REDIS_URL", "redis://localhost:6379/0")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_TIMEZONE = "Europe/Moscow"
+
