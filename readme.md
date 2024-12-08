@@ -1,11 +1,11 @@
 ## DRF_hw"
 
-26.1 Документирование и безопасность
+26.2. Celery
 
 ## Установка
 
 1. **Клонируйте репозиторий:**
-        https://github.com/AlexanderMalach/drf_5.git
+        https://github.com/AlexanderMalach/drf-6.git
 
 2. **Создайте виртуальное окружение и активируйте его:**
     ```sh
