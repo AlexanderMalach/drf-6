@@ -1,7 +1,4 @@
 from rest_framework.generics import RetrieveUpdateAPIView
-from rest_framework.response import Response
-from rest_framework_simplejwt.views import TokenObtainPairView
-
 from .models import User
 from .serializers import UserSerializer, TokenSerializer
 import django_filters
@@ -15,7 +12,18 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .serializers import create_stripe_product, create_stripe_price, create_stripe_checkout_session
 from .models import Payment
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.response import Response
+from django.utils.timezone import now
 
+class CustomTokenObtainPairView(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        user = self.user
+        if user:
+            user.last_login = now()
+            user.save()
+        return response
 class StripePaymentView(APIView):
     permission_classes = [IsAuthenticated]
 

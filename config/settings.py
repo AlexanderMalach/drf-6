@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+
+from celery.schedules import crontab
 from decouple import config
 
 
@@ -143,4 +145,13 @@ CELERY_BROKER_URL = config("REDIS_URL", "redis://localhost:6379/0")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_TIMEZONE = "Europe/Moscow"
+
+CELERY_BEAT_SCHEDULE = {
+    'deactivate_inactive_users': {
+        'task': 'your_app_name.tasks.deactivate_inactive_users',
+        'schedule': crontab(hour=0, minute=0),  # Каждый день в полночь
+    },
+}
+
+
 
