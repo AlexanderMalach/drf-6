@@ -6,6 +6,10 @@ from django.conf import settings
 from celery import shared_task
 from django.utils.timezone import now
 from django.contrib.auth import get_user_model
+
+from lms.models import Course, Subscription
+
+
 @shared_task
 def send_course_update_email(user_email, course_title, message):
     send_mail(
@@ -14,13 +18,14 @@ def send_course_update_email(user_email, course_title, message):
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[user_email],
     )
-
-
-
-
 @shared_task
-def deactivate_inactive_users():
-    User = get_user_model()
-    one_month_ago = now() - timedelta(days=30)
-    inactive_users = User.objects.filter(last_login__lt=one_month_ago, is_active=True)
-    inactive_users.update(is_active=False)
+def notify_subscribers_about_updating_course(course_id):
+    course = Course.objects.get(id=course_id)
+    subscribers = Subscription.objects.filter(course=course)
+    for subscriber in subscribers:
+        send_course_update_email.delay(
+            user_email=subscriber.user.email,
+            course_title=course.title,
+            message=f"Курс '{course.title}' был изменен. {"message"}"
+        )
+
